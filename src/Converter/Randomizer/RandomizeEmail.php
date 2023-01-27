@@ -44,7 +44,7 @@ class RandomizeEmail extends RandomizeText
 
         // Replace the username
         $parts = explode('@', $value);
-        $value = parent::convert($parts[0]);
+        $value = md5($parts[0]);
 
         if (!isset($parts[1])) {
             return $value;
