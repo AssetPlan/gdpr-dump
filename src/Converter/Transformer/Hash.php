@@ -14,9 +14,9 @@ class Hash implements ConverterInterface
     private string $algorithm;
 
     /**
-     * @throws ValidationException
+     * @inheritdoc
      */
-    public function __construct(array $parameters = [])
+    public function setParameters(array $parameters): void
     {
         $input = (new ParameterProcessor())
             ->addParameter('algorithm', Parameter::TYPE_STRING, true, 'sha1')
@@ -35,7 +35,7 @@ class Hash implements ConverterInterface
     /**
      * @inheritdoc
      */
-    public function convert(mixed $value, array $context = []): mixed
+    public function convert(mixed $value, array $context = []): string
     {
         $value = (string) $value;
 

@@ -7,7 +7,6 @@ namespace Smile\GdprDump\Converter\Transformer;
 use Smile\GdprDump\Converter\ConverterInterface;
 use Smile\GdprDump\Converter\Parameters\Parameter;
 use Smile\GdprDump\Converter\Parameters\ParameterProcessor;
-use Smile\GdprDump\Converter\Parameters\ValidationException;
 
 class Replace implements ConverterInterface
 {
@@ -15,9 +14,9 @@ class Replace implements ConverterInterface
     private string $replacement;
 
     /**
-     * @throws ValidationException
+     * @inheritdoc
      */
-    public function __construct(array $parameters)
+    public function setParameters(array $parameters): void
     {
         $input = (new ParameterProcessor())
             ->addParameter('search', Parameter::TYPE_STRING, true)
@@ -31,12 +30,12 @@ class Replace implements ConverterInterface
     /**
      * @inheritdoc
      */
-    public function convert(mixed $value, array $context = []): mixed
+    public function convert(mixed $value, array $context = []): string
     {
         $value = (string) $value;
 
         return $value !== ''
-            ? str_replace($this->search, $this->replacement, (string) $value)
+            ? str_replace($this->search, $this->replacement, $value)
             : $value;
     }
 }

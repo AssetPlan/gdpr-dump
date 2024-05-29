@@ -5,48 +5,58 @@ parameters:
     faker.locale: 'en_US'
 
 services:
-    _defaults:
-        autowire: false # explained in AppKernel::buildContainer
-        autoconfigure: false # not useful in this app
-
     _instanceof:
         Smile\GdprDump\Config\Compiler\Processor\ProcessorInterface:
             tags: ['config.compiler_processor']
-        Smile\GdprDump\Dumper\Mysql\ExtensionInterface:
-            tags: ['dumper.mysqldump_extension']
+        Smile\GdprDump\Converter\ConverterInterface:
+            shared: false
+            tags: ['converter'] # used by ConverterAliasPass to create aliases for data converters
         Smile\GdprDump\Phar\Minify\MinifierInterface:
             tags: ['compiler.minifier']
+        Symfony\Component\Console\Command\Command:
+            public: true
+
+    Smile\GdprDump\Converter\:
+        resource: '../../src/Converter'
+
+    Smile\GdprDump\Converter\Proxy\Conditional:
+        arguments:
+            - '@converter.condition_builder'
+
+    Smile\GdprDump\Converter\Proxy\Faker:
+        arguments:
+            - '@faker.service'
+
+    console.dump_info:
+        class: 'Smile\GdprDump\Console\Helper\DumpInfo'
+        arguments:
+            - '@event_dispatcher'
 
     command.compile:
         class: 'Smile\GdprDump\Console\Command\CompileCommand'
-        public: true
         arguments:
             - '@phar.compiler'
             - '%faker.locale%'
 
     command.dump:
         class: 'Smile\GdprDump\Console\Command\DumpCommand'
-        public: true
         arguments:
             - '@dumper'
             - '@config.loader'
             - '@config.schema_validator'
             - '@config.compiler'
+            - '@console.dump_info'
 
     config.loader:
         class: 'Smile\GdprDump\Config\Loader\ConfigLoader'
         public: true # used by functional tests
         arguments:
-            - '@config.parser'
             - '@config.file_locator'
 
     config.file_locator:
         class: 'Smile\GdprDump\Config\Loader\FileLocator'
         arguments:
             - '%config.templates_dir%'
-
-    config.parser:
-        class: 'Smile\GdprDump\Config\Parser\YamlParser'
 
     config.schema_validator:
         class: 'Smile\GdprDump\Config\Validator\JsonSchemaValidator'
@@ -59,35 +69,54 @@ services:
         arguments:
             - !tagged_iterator config.compiler_processor
 
+    config.compiler.dump_output:
+        class: 'Smile\GdprDump\Config\Compiler\Processor\DumpOutputProcessor'
+
     config.compiler.processor.env_var:
         class: 'Smile\GdprDump\Config\Compiler\Processor\EnvVarProcessor'
 
     config.compiler.processor.version:
         class: 'Smile\GdprDump\Config\Compiler\Processor\VersionProcessor'
 
+    converter.builder:
+        class: 'Smile\GdprDump\Converter\ConverterBuilder'
+        arguments:
+            - '@converter.factory'
+
     converter.factory:
         class: 'Smile\GdprDump\Converter\ConverterFactory'
         arguments:
-            - '@converter.resolver'
-            - '@faker.service'
+            - '@service_container'
 
-    converter.resolver:
-        class: 'Smile\GdprDump\Converter\ConverterResolver'
+    converter.condition_builder:
+        class: 'Smile\GdprDump\Converter\ConditionBuilder'
+
+    database.factory:
+        class: 'Smile\GdprDump\Database\DatabaseFactory'
 
     dumper:
         class: 'Smile\GdprDump\Dumper\MysqlDumper'
         public: true # used by functional tests
         arguments:
-            - !tagged_iterator dumper.mysqldump_extension
+            - '@database.factory'
+            - '@event_dispatcher'
 
-    dumper.data_converter_extension:
-        class: 'Smile\GdprDump\Dumper\Mysql\DataConverterExtension'
+    dumper.listener.faker_locale:
+        class: 'Smile\GdprDump\Dumper\Listener\FakerLocaleListener'
+        tags: [{name: 'kernel.event_listener', priority: 10}] # must be triggered before data converter listener
         arguments:
-            - '@converter.factory'
             - '@faker.service'
 
-    dumper.table_filter_extension:
-        class: 'Smile\GdprDump\Dumper\Mysql\TableFilterExtension'
+    dumper.listener.data_converter:
+        class: 'Smile\GdprDump\Dumper\Listener\DataConverterListener'
+        tags: ['kernel.event_listener']
+        arguments:
+            - '@converter.builder'
+            - '@converter.condition_builder'
+
+    dumper.listener.table_filter:
+        class: 'Smile\GdprDump\Dumper\Listener\TableFilterListener'
+        tags: ['kernel.event_listener']
 
     faker.service:
         class: 'Smile\GdprDump\Faker\FakerService'

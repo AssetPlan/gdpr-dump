@@ -8,11 +8,15 @@ use ErrorException;
 use Exception;
 use RuntimeException;
 use Smile\GdprDump\Console\Application;
+use Smile\GdprDump\DependencyInjection\Compiler\ConverterAliasPass;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\EventDispatcher\DependencyInjection\RegisterListenersPass;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class AppKernel
 {
@@ -96,7 +100,6 @@ class AppKernel
      * The container is not cached (cf. https://symfony.com/doc/6.2/components/dependency_injection/compilation.html#dumping-the-configuration-for-performance)
      * because the cache file would contain hardcoded paths (e.g. app_root).
      * It would prevent the phar file from working.
-     * As a consequence, for performance reasons, autowiring is also disabled.
      */
     private function buildContainer(): ContainerInterface
     {
@@ -106,7 +109,11 @@ class AppKernel
         $loader = new YamlFileLoader($container, new FileLocator($basePath . '/app/config'));
         $loader->load('services.yaml');
 
+        $container->addCompilerPass(new RegisterListenersPass(), PassConfig::TYPE_BEFORE_REMOVING);
+        $container->addCompilerPass(new ConverterAliasPass());
+
         $container->setParameter('app_root', $basePath);
+        $container->register('event_dispatcher', EventDispatcher::class);
         $container->compile();
 
         return $container;

@@ -7,7 +7,6 @@ namespace Smile\GdprDump\Converter\Generator;
 use Smile\GdprDump\Converter\ConverterInterface;
 use Smile\GdprDump\Converter\Parameters\Parameter;
 use Smile\GdprDump\Converter\Parameters\ParameterProcessor;
-use Smile\GdprDump\Converter\Parameters\ValidationException;
 
 class RandomText implements ConverterInterface
 {
@@ -17,9 +16,9 @@ class RandomText implements ConverterInterface
     private int $charactersCount;
 
     /**
-     * @throws ValidationException
+     * @inheritdoc
      */
-    public function __construct(array $parameters = [])
+    public function setParameters(array $parameters): void
     {
         $input = (new ParameterProcessor())
             ->addParameter('characters', Parameter::TYPE_STRING, true, '0123456789abcdefghijklmnopqrstuvwxyz')
@@ -36,7 +35,7 @@ class RandomText implements ConverterInterface
     /**
      * @inheritdoc
      */
-    public function convert(mixed $value, array $context = []): mixed
+    public function convert(mixed $value, array $context = []): string
     {
         $result = '';
         $length = mt_rand($this->minLength, $this->maxLength);

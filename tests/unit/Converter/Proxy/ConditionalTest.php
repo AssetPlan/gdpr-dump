@@ -6,9 +6,8 @@ namespace Smile\GdprDump\Tests\Unit\Converter\Proxy;
 
 use Smile\GdprDump\Converter\ConverterInterface;
 use Smile\GdprDump\Converter\Parameters\ValidationException;
-use Smile\GdprDump\Converter\Proxy\Conditional;
 use Smile\GdprDump\Tests\Framework\Mock\Converter\ConverterMock;
-use Smile\GdprDump\Tests\Unit\TestCase;
+use Smile\GdprDump\Tests\Unit\Converter\TestCase;
 use stdClass;
 
 class ConditionalTest extends TestCase
@@ -18,13 +17,11 @@ class ConditionalTest extends TestCase
      */
     public function testCondition(): void
     {
-        $parameters = [
+        $converter = $this->createConditionalConverter([
             'condition' => '{{id}} === @my_var',
             'if_true_converter' => $this->createIfTrueConverter(),
             'if_false_converter' => $this->createIfFalseConverter(),
-        ];
-
-        $converter = new Conditional($parameters);
+        ]);
 
         $value = $converter->convert('value', ['row_data' => ['id' => 1], 'vars' => ['my_var' => 1]]);
         $this->assertSame('success_value', $value);
@@ -41,12 +38,8 @@ class ConditionalTest extends TestCase
      */
     public function testConvertersNotSet(): void
     {
-        $parameters = [
-            'condition' => '{{id}} === 1',
-        ];
-
         $this->expectException(ValidationException::class);
-        new Conditional($parameters);
+        $this->createConditionalConverter(['condition' => '{{id}} === 1']);
     }
 
     /**
@@ -56,7 +49,7 @@ class ConditionalTest extends TestCase
     public function testIfTrueConverterNotValid(): void
     {
         $this->expectException(ValidationException::class);
-        new Conditional(['if_true_converter' => new stdClass()]);
+        $this->createConditionalConverter(['if_true_converter' => new stdClass()]);
     }
 
     /**
@@ -66,7 +59,7 @@ class ConditionalTest extends TestCase
     public function testIfFalseConverterNotValid(): void
     {
         $this->expectException(ValidationException::class);
-        new Conditional(['if_false_converter' => new stdClass()]);
+        $this->createConditionalConverter(['if_false_converter' => new stdClass()]);
     }
 
     /**
@@ -74,12 +67,8 @@ class ConditionalTest extends TestCase
      */
     public function testConditionNotSet(): void
     {
-        $parameters = [
-            'if_true_converter' => $this->createIfTrueConverter(),
-        ];
-
         $this->expectException(ValidationException::class);
-        new Conditional($parameters);
+        $this->createConditionalConverter(['if_true_converter' => $this->createIfTrueConverter()]);
     }
 
     /**
@@ -87,32 +76,26 @@ class ConditionalTest extends TestCase
      */
     public function testEmptyCondition(): void
     {
-        $parameters = [
+        $this->expectException(ValidationException::class);
+        $this->createConditionalConverter([
             'if_true_converter' => $this->createIfTrueConverter(),
             'condition' => '',
-        ];
-
-        $this->expectException(ValidationException::class);
-        new Conditional($parameters);
+        ]);
     }
 
     /**
      * Create a test converter for conditions that evaluate to true.
-     *
-     * @return ConverterMock
      */
     private function createIfTrueConverter(): ConverterInterface
     {
-        return new ConverterMock(['prefix' => 'success_']);
+        return $this->createConverter(ConverterMock::class, ['prefix' => 'success_']);
     }
 
     /**
      * Create a test converter for conditions that evaluate to false.
-     *
-     * @return ConverterMock
      */
     private function createIfFalseConverter(): ConverterInterface
     {
-        return new ConverterMock(['prefix' => 'failure_']);
+        return $this->createConverter(ConverterMock::class, ['prefix' => 'failure_']);
     }
 }

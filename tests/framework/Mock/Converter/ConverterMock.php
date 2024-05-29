@@ -10,7 +10,10 @@ class ConverterMock implements ConverterInterface
 {
     private string $prefix = 'test_';
 
-    public function __construct(array $parameters = [])
+    /**
+     * @inheritdoc
+     */
+    public function setParameters(array $parameters): void
     {
         if (array_key_exists('prefix', $parameters)) {
             $this->prefix = (string) $parameters['prefix'];
@@ -20,7 +23,7 @@ class ConverterMock implements ConverterInterface
     /**
      * @inheritdoc
      */
-    public function convert(mixed $value, array $context = []): mixed
+    public function convert(mixed $value, array $context = []): string
     {
         return $this->prefix . $value;
     }

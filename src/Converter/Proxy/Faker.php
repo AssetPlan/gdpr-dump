@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Smile\GdprDump\Converter\Proxy;
 
-use Faker\Generator;
+use Exception;
 use Smile\GdprDump\Converter\ConverterInterface;
 use Smile\GdprDump\Converter\Parameters\Parameter;
 use Smile\GdprDump\Converter\Parameters\ParameterProcessor;
 use Smile\GdprDump\Converter\Parameters\ValidationException;
+use Smile\GdprDump\Faker\FakerService;
 
 class Faker implements ConverterInterface
 {
-    private Generator $faker;
-    private string $formatter;
+    private object $provider;
+    private string $method;
     private array $arguments;
 
     /**
@@ -21,21 +22,34 @@ class Faker implements ConverterInterface
      */
     private array $placeholders = [];
 
+    public function __construct(private FakerService $fakerService)
+    {
+    }
+
     /**
-     * @throws ValidationException
+     * @inheritdoc
      */
-    public function __construct(array $parameters)
+    public function setParameters(array $parameters): void
     {
         $input = (new ParameterProcessor())
-            ->addParameter('faker', Generator::class, true)
             ->addParameter('formatter', Parameter::TYPE_STRING, true)
             ->addParameter('arguments', Parameter::TYPE_ARRAY, false, [])
             ->process($parameters);
 
-        $this->faker = $input->get('faker');
-        $this->formatter = $input->get('formatter');
-        $this->arguments = $input->get('arguments') ?? [];
+        // Create the formatter now to ensure that errors related to undefined formatters
+        // are triggered before the start of the dump process
+        $formatter = $input->get('formatter');
+        try {
+            // @phpstan-ignore-next-line getFormatter function always returns an array with 2 items
+            [$this->provider, $this->method] = $this->fakerService
+                ->getGenerator()
+                ->getFormatter($formatter);
+        } catch (Exception $e) {
+            // Wrap the original exception to make it more clear that the error is due to a faker formatter
+            throw new ValidationException(sprintf('Faker formatter error: %s', $e->getMessage()), $e);
+        }
 
+        $this->arguments = $input->get('arguments') ?? [];
         foreach ($this->arguments as $name => $value) {
             if ($value === '{{value}}') {
                 $this->placeholders[] = $name;
@@ -48,11 +62,6 @@ class Faker implements ConverterInterface
      */
     public function convert(mixed $value, array $context = []): mixed
     {
-        // Faster than calling the "format" method of the Faker generator
-        // (the "format" method uses call_user_func_array, which is very slow)
-        // @phpstan-ignore-next-line getFormatter function always returns an array with 2 items
-        [$provider, $method] = $this->faker->getFormatter($this->formatter);
-
         $arguments = $this->arguments;
 
         // Replace all occurrences of "{{value}}" by $value
@@ -60,6 +69,6 @@ class Faker implements ConverterInterface
             $arguments[$name] = $value;
         }
 
-        return $provider->$method(...$arguments);
+        return $this->provider->{$this->method}(...$arguments);
     }
 }
