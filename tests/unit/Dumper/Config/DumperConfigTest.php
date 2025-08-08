@@ -61,7 +61,7 @@ class DumperConfigTest extends TestCase
      */
     public function testDumpSettings(): void
     {
-        $config = $this->createConfig(['dump' => ['output' => 'dump.sql', 'hex_blob' => true]]);
+        $config = $this->createConfig(['dump' => ['output' => 'dump.sql', 'hex_blob' => true, 'replace' => true]]);
 
         // Dump output
         $this->assertSame('dump.sql', $config->getDumpOutput());
@@ -70,6 +70,8 @@ class DumperConfigTest extends TestCase
         $settings = $config->getDumpSettings();
         $this->assertArrayHasKey('hex_blob', $settings);
         $this->assertTrue($settings['hex_blob']);
+        $this->assertArrayHasKey('replace', $settings);
+        $this->assertTrue($settings['replace']);
     }
 
     /**
@@ -140,6 +142,8 @@ class DumperConfigTest extends TestCase
         $this->assertFalse($settings['hex_blob']);
         $this->assertArrayHasKey('lock_tables', $settings);
         $this->assertFalse($settings['lock_tables']);
+        $this->assertArrayHasKey('replace', $settings);
+        $this->assertFalse($settings['replace']);
 
         $settings = $config->getFakerSettings();
         $this->assertArrayHasKey('locale', $settings);
