@@ -9,12 +9,18 @@
             "email": "dirtech@smile.fr"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/cfuentessalgado/mysqldump-php"
+        }
+    ],
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "ext-json": "*",
         "ext-pdo": "*",
         "doctrine/dbal": "^3.1",
-        "druidfi/mysqldump-php": "^1.0",
+        "druidfi/mysqldump-php": "dev-main",
         "fakerphp/faker": "^1.17",
         "justinrainbow/json-schema": "^5.2",
         "symfony/config": "^6.1",

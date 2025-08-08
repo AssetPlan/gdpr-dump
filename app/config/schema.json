@@ -177,6 +177,9 @@
                 "no_create_info": {
                     "type": "boolean"
                 },
+                "replace": {
+                    "type": "boolean"
+                },
                 "routines": {
                     "type": "boolean"
                 },

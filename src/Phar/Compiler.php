@@ -113,6 +113,8 @@ class Compiler
                         '#fakerphp/faker/src/Faker/Provider/(?!' . implode('|', $this->locales) . ')[a-zA-Z_]+/#',
                     ]
                 ),
+            $finder($this->basePath . '/vendor/symfony/console/Resources')
+                ->name(['completion.bash', 'completion.fish', 'completion.zsh']),
             $finder($this->basePath . '/app')
                 ->notName(['example.yaml']),
         ];
