@@ -16,10 +16,14 @@ class Conditional implements ConverterInterface
     private ?ConverterInterface $ifTrueConverter = null;
     private ?ConverterInterface $ifFalseConverter = null;
 
+    public function __construct(private ConditionBuilder $conditionBuilder)
+    {
+    }
+
     /**
-     * @throws ValidationException
+     * @inheritdoc
      */
-    public function __construct(array $parameters)
+    public function setParameters(array $parameters): void
     {
         $input = (new ParameterProcessor())
             ->addParameter('condition', Parameter::TYPE_STRING, true)
@@ -33,8 +37,7 @@ class Conditional implements ConverterInterface
             );
         }
 
-        $conditionBuilder = new ConditionBuilder();
-        $this->condition = $conditionBuilder->build($input->get('condition'));
+        $this->condition = $this->conditionBuilder->build($input->get('condition'));
         $this->ifTrueConverter = $input->get('if_true_converter');
         $this->ifFalseConverter = $input->get('if_false_converter');
     }

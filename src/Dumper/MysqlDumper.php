@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace Smile\GdprDump\Dumper;
 
-use Doctrine\DBAL\Exception as DBALException;
 use Druidfi\Mysqldump\Mysqldump;
 use Smile\GdprDump\Config\ConfigInterface;
-use Smile\GdprDump\Database\Database;
+use Smile\GdprDump\Database\DatabaseFactory;
 use Smile\GdprDump\Dumper\Config\ConfigProcessor;
 use Smile\GdprDump\Dumper\Config\DumperConfig;
-use Smile\GdprDump\Dumper\Mysql\Context;
-use Smile\GdprDump\Dumper\Mysql\ExtensionInterface;
+use Smile\GdprDump\Dumper\Event\DumpEvent;
+use Smile\GdprDump\Dumper\Event\DumpFinishedEvent;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class MysqlDumper implements DumperInterface
 {
-    /**
-     * @param ExtensionInterface[] $extensions
-     */
-    public function __construct(private iterable $extensions = [])
-    {
+    public function __construct(
+        private DatabaseFactory $databaseFactory,
+        private EventDispatcherInterface $eventDispatcher
+    ) {
     }
 
     /**
@@ -27,8 +26,9 @@ class MysqlDumper implements DumperInterface
      */
     public function dump(ConfigInterface $config): void
     {
+        $database = $this->databaseFactory->create($config);
+
         // Process the configuration
-        $database = $this->getDatabase($config);
         $processor = new ConfigProcessor($database->getMetadata());
         $config = $processor->process($config);
 
@@ -52,11 +52,7 @@ class MysqlDumper implements DumperInterface
             $database->getConnectionParams()->get('driverOptions', [])
         );
 
-        // Register extensions
-        $extensionContext = new Context($dumper, $database, $config, $context);
-        foreach ($this->extensions as $extension) {
-            $extension->register($extensionContext);
-        }
+        $this->eventDispatcher->dispatch(new DumpEvent($dumper, $database, $config, $context));
 
         // Close the Doctrine connection before proceeding to the dump creation (MySQLDump-PHP uses its own connection)
         $database->getConnection()->close();
@@ -64,29 +60,7 @@ class MysqlDumper implements DumperInterface
         // Create the dump
         $output = $config->getDumpOutput();
         $dumper->start($output);
-    }
-
-    /**
-     * Create a database object.
-     *
-     * @throws DBALException
-     */
-    private function getDatabase(ConfigInterface $config): Database
-    {
-        $connectionParams = $config->get('database', []);
-
-        // Rename some keys (for compatibility with the Doctrine connection)
-        if (array_key_exists('name', $connectionParams)) {
-            $connectionParams['dbname'] = $connectionParams['name'];
-            unset($connectionParams['name']);
-        }
-
-        if (array_key_exists('driver_options', $connectionParams)) {
-            $connectionParams['driverOptions'] = $connectionParams['driver_options'];
-            unset($connectionParams['driver_options']);
-        }
-
-        return new Database($connectionParams);
+        $this->eventDispatcher->dispatch(new DumpFinishedEvent($config));
     }
 
     /**
@@ -115,6 +89,9 @@ class MysqlDumper implements DumperInterface
         $settings['include-tables'] = $config->getTablesWhitelist();
         $settings['exclude-tables'] = $config->getTablesBlacklist();
         $settings['no-data'] = $config->getTablesToTruncate();
+
+        // Set readonly session
+        $settings['init_commands'][] = 'SET SESSION TRANSACTION READ ONLY';
 
         return $settings;
     }

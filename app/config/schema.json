@@ -242,22 +242,17 @@
                 "skip_conversion_if": {
                     "type": ["string", "number"]
                 },
+                "where": {
+                    "type": ["string"]
+                },
                 "filters": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "minItems": 2,
-                        "maxItems": 3
-                    }
+                    "deprecated": true
                 },
                 "order_by": {
                     "type": ["string", "number"]
                 },
-                "orderBy": {
-                    "type": ["string", "number"]
-                },
                 "limit": {
-                    "type": "integer"
+                    "type": ["integer", "null"]
                 }
             },
             "additionalProperties": false
@@ -266,7 +261,8 @@
             "type": ["object"],
             "properties": {
                 "converter": {
-                    "type": ["string"],
+                    "type": "string",
+                    "required": true,
                     "minLength": 1
                 },
                 "parameters": {

@@ -7,26 +7,50 @@ namespace Smile\GdprDump\Tests\Unit\Converter\Proxy;
 use Smile\GdprDump\Converter\Parameters\ValidationException;
 use Smile\GdprDump\Converter\Proxy\Cache;
 use Smile\GdprDump\Converter\Randomizer\RandomizeText;
-use Smile\GdprDump\Tests\Unit\TestCase;
+use Smile\GdprDump\Tests\Framework\Mock\Converter\ConverterMock;
+use Smile\GdprDump\Tests\Unit\Converter\TestCase;
 use stdClass;
 
 class CacheTest extends TestCase
 {
     /**
-     * Test the converter.
+     * Assert that values are properly cached.
      */
-    public function testConverter(): void
+    public function testValueIsCached(): void
     {
-        $converter1 = new Cache(['converter' => new RandomizeText(), 'cache_key' => 'key1']);
-        $converter2 = new Cache(['converter' => new RandomizeText(), 'cache_key' => 'key2']);
+        $parameters = [
+            'converter' => $this->createConverter(RandomizeText::class),
+            'cache_key' => 'key1',
+        ];
 
-        $value = 'textToAnonymize';
-        $value1 = $converter1->convert($value);
-        $value2 = $converter1->convert($value);
-        $this->assertSame($value1, $value2);
+        $converter = $this->createConverter(Cache::class, $parameters);
+        $value = 'text to randomize';
+        $convertedValue = $converter->convert($value);
 
-        $value3 = $converter2->convert($value);
-        $this->assertNotSame($value3, $value2);
+        // The converter must always return the same result for a given value
+        $this->assertSame($convertedValue, $converter->convert($value));
+        $this->assertNotSame($convertedValue, $converter->convert('another text to randomize'));
+
+        // Value generated must not be the same when using another cache key
+        $converter->setParameters(array_merge($parameters, ['cache_key' => 'key2']));
+        $this->assertNotSame($convertedValue, $converter->convert($value));
+    }
+
+    /**
+     * Assert that that the cache storage is shared between converter instances.
+     */
+    public function testCacheIsSharedBetweenInstances(): void
+    {
+        $value = 'text to randomize';
+        $parameters = [
+            'converter' => $this->createConverter(RandomizeText::class),
+            'cache_key' => 'key1',
+        ];
+
+        $this->assertSame(
+            $this->createConverter(Cache::class, $parameters)->convert($value),
+            $this->createConverter(Cache::class, $parameters)->convert($value)
+        );
     }
 
     /**
@@ -35,7 +59,7 @@ class CacheTest extends TestCase
     public function testConverterNotSet(): void
     {
         $this->expectException(ValidationException::class);
-        new Cache(['cache_key' => 'username']);
+        $this->createConverter(Cache::class, ['cache_key' => 'username']);
     }
 
     /**
@@ -44,7 +68,10 @@ class CacheTest extends TestCase
     public function testConverterNotValid(): void
     {
         $this->expectException(ValidationException::class);
-        new Cache(['converter' => new stdClass()]);
+        $this->createConverter(Cache::class, [
+            'converter' => new stdClass(),
+            'cache_key' => 'username',
+        ]);
     }
 
     /**
@@ -53,7 +80,9 @@ class CacheTest extends TestCase
     public function testCacheKeyNotSet(): void
     {
         $this->expectException(ValidationException::class);
-        new Cache(['converter' => new RandomizeText()]);
+        $this->createConverter(Cache::class, [
+            'converter' => $this->createConverter(ConverterMock::class),
+        ]);
     }
 
     /**
@@ -62,6 +91,9 @@ class CacheTest extends TestCase
     public function testEmptyCacheKey(): void
     {
         $this->expectException(ValidationException::class);
-        new Cache(['converter' => new RandomizeText(), 'cache_key' => '']);
+        $this->createConverter(Cache::class, [
+            'converter' => $this->createConverter(ConverterMock::class),
+            'cache_key' => '',
+        ]);
     }
 }

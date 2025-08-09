@@ -8,8 +8,7 @@ use Smile\GdprDump\Config\Config;
 use Smile\GdprDump\Config\Loader\ConfigLoader;
 use Smile\GdprDump\Config\Loader\FileLocator;
 use Smile\GdprDump\Config\Loader\FileNotFoundException;
-use Smile\GdprDump\Config\Parser\ParseException;
-use Smile\GdprDump\Config\Parser\YamlParser;
+use Smile\GdprDump\Config\Loader\ParseException;
 use Smile\GdprDump\Tests\Unit\TestCase;
 
 class ConfigLoaderTest extends TestCase
@@ -20,8 +19,8 @@ class ConfigLoaderTest extends TestCase
     public function testLoad(): void
     {
         $config = new Config(['version' => '2.0.0']);
-        $configLoader = $this->createConfigLoader($config);
-        $configLoader->load($this->getResource('config/templates/test.yaml'));
+        $configLoader = $this->createConfigLoader();
+        $configLoader->load($this->getResource('config/templates/test.yaml'), $config);
 
         $expectedSubset = ['output' => '%env(DUMP_OUTPUT)%'];
         $this->assertArraySubset($expectedSubset, $config->get('dump'));
@@ -52,10 +51,10 @@ class ConfigLoaderTest extends TestCase
     public function testFileNotFoundException(): void
     {
         $config = new Config();
-        $configLoader = $this->createConfigLoader($config);
+        $configLoader = $this->createConfigLoader();
 
         $this->expectException(FileNotFoundException::class);
-        $configLoader->load('not_exists.yaml');
+        $configLoader->load('not_exists.yaml', $config);
     }
 
     /**
@@ -64,10 +63,10 @@ class ConfigLoaderTest extends TestCase
     public function testDataIsNotAnArray(): void
     {
         $config = new Config();
-        $configLoader = $this->createConfigLoader($config);
+        $configLoader = $this->createConfigLoader();
 
         $this->expectException(ParseException::class);
-        $configLoader->load($this->getResource('config/templates/invalid_data.yaml'));
+        $configLoader->load($this->getResource('config/templates/invalid_data.yaml'), $config);
     }
 
     /**
@@ -103,13 +102,10 @@ class ConfigLoaderTest extends TestCase
     /**
      * Create a config loader object.
      */
-    private function createConfigLoader(Config $config): ConfigLoader
+    private function createConfigLoader(): ConfigLoader
     {
         $templatesDirectory = $this->getResource('config/templates');
 
-        $configLoader = new ConfigLoader(new YamlParser(), new FileLocator($templatesDirectory));
-        $configLoader->setConfig($config);
-
-        return $configLoader;
+        return new ConfigLoader(new FileLocator($templatesDirectory));
     }
 }

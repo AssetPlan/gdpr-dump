@@ -2,11 +2,70 @@
 
 All notable changes to this project will be documented in this file.
 
+## 5.0.0 (WIP)
+
+- Added table column validation. GdprDump now throws an exception if a config file contains an undefined column ([#125](https://github.com/Smile-SA/gdpr-dump/pull/125))
+- Removed support of the `filters` parameter. Use the `where` parameter instead ([#128](https://github.com/Smile-SA/gdpr-dump/pull/128))
+- Removed undefined column customer_address.vat_id from shopware6 template ([#132](https://github.com/Smile-SA/gdpr-dump/pull/132))
+
+## [4.2.2] - 2024-03-26
+[4.2.2]: https://github.com/Smile-SA/gdpr-dump/compare/4.2.1...4.2.2
+
+- Changed `limit` parameter type from `int` to `int|null` ([#126](https://github.com/Smile-SA/gdpr-dump/pull/126))
+- Removed `orderBy` param from schema.json ([#127](https://github.com/Smile-SA/gdpr-dump/pull/127))
+
+## [4.2.1] - 2024-03-07
+[4.2.1]: https://github.com/Smile-SA/gdpr-dump/compare/4.2.0...4.2.1
+
+- Use a readonly connection to create the dump ([#121](https://github.com/Smile-SA/gdpr-dump/pull/121))
+
+## [4.2.0] - 2024-03-05
+[4.2.0]: https://github.com/Smile-SA/gdpr-dump/compare/4.1.1...4.2.0
+
+- Drastically improved dump performance ([#117](https://github.com/Smile-SA/gdpr-dump/pull/117))
+- Added `where` parameter and deprecated `filters` parameter ([#116](https://github.com/Smile-SA/gdpr-dump/pull/116))
+- Write dump information and dump progress bar to stderr when verbose mode is enabled ([#113](https://github.com/Smile-SA/gdpr-dump/pull/113))
+- Better converter condition validation by using a php tokenizer ([#114](https://github.com/Smile-SA/gdpr-dump/pull/114))
+
+**WARNING**: the `filters` parameter is now **deprecated**.
+It will be removed in the next major version.
+Use the `where` parameter instead to apply table filters.
+
+## [4.1.1] - 2024-02-20
+[4.1.1]: https://github.com/Smile-SA/gdpr-dump/compare/4.1.0...4.1.1
+
+- Display the table/column names when a data converter throws an exception ([#110](https://github.com/Smile-SA/gdpr-dump/pull/110))
+- Resolve Faker formatters before dump creation ([#108](https://github.com/Smile-SA/gdpr-dump/pull/108))
+
+## [4.1.0] - 2024-02-19
+[4.1.0]: https://github.com/Smile-SA/gdpr-dump/compare/4.0.3...4.1.0
+
+- Added support for SQL expressions as column filter ([#97](https://github.com/Smile-SA/gdpr-dump/pull/97))
+- GdprDump now uses composer to determine the application version
+
+## [4.0.3] - 2024-01-09
+[4.0.3]: https://github.com/Smile-SA/gdpr-dump/compare/4.0.2...4.0.3
+
+- Added shopware6 template ([#92](https://github.com/Smile-SA/gdpr-dump/pull/92))
+- Replaced "randomizeText" converter with "anonymizeText" in config templates ([#93](https://github.com/Smile-SA/gdpr-dump/pull/93))
+- Updated magento2 template (tables added: "integration", "rating_option_vote", "magento_login_as_customer_log")
+
+## [4.0.2] - 2023-10-10
+[4.0.2]: https://github.com/Smile-SA/gdpr-dump/compare/4.0.1...4.0.2
+
+- Fix phar file compilation error that appeared after the release of symfony/console v6.2.10
+- `requires_version` param was removed from base templates (except magento2)
+
+## [4.0.1] - 2023-03-29
+[4.0.1]: https://github.com/Smile-SA/gdpr-dump/compare/4.0.0...4.0.1
+
+- Better error message when a converter is declared without a name ([#83](https://github.com/Smile-SA/gdpr-dump/issues/83))
+
 ## [4.0.0] - 2023-01-10
 [4.0.0]: https://github.com/Smile-SA/gdpr-dump/compare/3.1.1...4.0.0
 
 - Set minimum PHP version to 8.1
-- Replace `ifsnop/mysqldump-php` package with `druidfi/mysqldump-php`
+- Replace `ifsnop/mysqldump-php` package with `druidfi/mysqldump-php` ([#78](https://github.com/Smile-SA/gdpr-dump/issues/78))
 
 ## [3.1.1] - 2022-12-13
 [3.1.1]: https://github.com/Smile-SA/gdpr-dump/compare/3.1.0...3.1.1
