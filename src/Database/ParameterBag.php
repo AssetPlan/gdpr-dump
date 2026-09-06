@@ -6,14 +6,22 @@ namespace Smile\GdprDump\Database;
 
 use UnexpectedValueException;
 
-class ParameterBag
+final class ParameterBag
 {
+    /**
+     * @var array<string, mixed>
+     */
     private array $params;
+
+    /**
+     * @var array<string, array<string, mixed>>
+     */
     private array $defaults = [
-        Database::DRIVER_MYSQL => ['host' => 'localhost', 'user' => 'root'],
+        DatabaseInterface::DRIVER_MYSQL => ['host' => 'localhost', 'user' => 'root'],
     ];
 
     /**
+     * @param array<string, mixed> $params
      * @throws UnexpectedValueException
      */
     public function __construct(array $params)
@@ -23,6 +31,8 @@ class ParameterBag
 
     /**
      * Get all parameters.
+     *
+     * @return array<string, mixed>
      */
     public function all(): array
     {
@@ -40,6 +50,8 @@ class ParameterBag
     /**
      * Prepare the connection params.
      *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
      * @throws UnexpectedValueException
      */
     private function prepareParams(array $params): array
@@ -52,7 +64,7 @@ class ParameterBag
 
         // Set the driver
         if (!isset($params['driver'])) {
-            $params['driver'] = Database::DRIVER_MYSQL;
+            $params['driver'] = DatabaseInterface::DRIVER_MYSQL;
         }
 
         if (isset($this->defaults[$params['driver']])) {

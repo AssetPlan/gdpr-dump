@@ -9,7 +9,7 @@ use Smile\GdprDump\Dumper\MysqlDumper;
 use Smile\GdprDump\Faker\FakerService;
 use Smile\GdprDump\Tests\Functional\TestCase;
 
-class MysqlDumperTest extends TestCase
+final class MysqlDumperTest extends TestCase
 {
     private string $dumpFile;
 
@@ -18,7 +18,7 @@ class MysqlDumperTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->dumpFile = $this->getResource('db/dump.sql');
+        $this->dumpFile = $this->getResource('var/dump.sql');
     }
 
     /**
@@ -55,6 +55,23 @@ class MysqlDumperTest extends TestCase
     }
 
     /**
+     * Assert that the dry run mode works properly.
+     */
+    public function testDryRun(): void
+    {
+        $config = $this->createConfig();
+        $dumper = $this->createDumper();
+
+        // Make sure the dump file does not exist
+        if (file_exists($this->dumpFile)) {
+            unlink($this->dumpFile);
+        }
+
+        $dumper->dump($config, true);
+        $this->assertFileDoesNotExist($this->dumpFile);
+    }
+
+    /**
      * Assert that the dump file contents match the dump configuration file.
      */
     private function assertDumpIsValid(bool $filterPropagationEnabled = true): void
@@ -67,7 +84,7 @@ class MysqlDumperTest extends TestCase
         unlink($this->dumpFile);
         $this->assertNotEmpty($output);
 
-        // Assert that only whitelisted tables are included in the dump
+        // Assert that the dump only includes allowed tables
         $this->assertStringContainsString('CREATE TABLE `customers`', $output);
         $this->assertStringContainsString('CREATE TABLE `stores`', $output);
         $this->assertStringContainsString('CREATE TABLE `addresses`', $output);

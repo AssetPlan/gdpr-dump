@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Smile\GdprDump\Dumper\Config;
 
+use RuntimeException;
 use Smile\GdprDump\Config\ConfigInterface;
 use Smile\GdprDump\Database\Metadata\MetadataInterface;
-use Smile\GdprDump\Dumper\Config\Validation\ValidationException;
 
-class ConfigProcessor
+final class ConfigProcessor
 {
     /**
      * @var string[]|null
@@ -31,14 +31,14 @@ class ConfigProcessor
     }
 
     /**
-     * Remote tables that don't exist and resolve patterns (e.g. "log_*") for the table whitelist/blacklist.
+     * Remove tables that don't exist and resolve patterns (e.g. "log_*") for included/excluded tables.
      */
     private function processTableLists(ConfigInterface $config): void
     {
         $configKeys = ['tables_whitelist', 'tables_blacklist'];
 
         foreach ($configKeys as $configKey) {
-            $tableNames = $config->get($configKey, []);
+            $tableNames = (array) $config->get($configKey, []);
 
             if (!empty($tableNames)) {
                 $resolved = $this->resolveTableNames($tableNames);
@@ -53,7 +53,7 @@ class ConfigProcessor
      */
     private function processTablesData(ConfigInterface $config): void
     {
-        $tablesData = $config->get('tables', []);
+        $tablesData = (array) $config->get('tables', []);
         if (!empty($tablesData)) {
             $resolved = $this->resolveTablesData($tablesData);
             $config->set('tables', $resolved);
@@ -62,6 +62,9 @@ class ConfigProcessor
 
     /**
      * Resolve a list of table name patterns.
+     *
+     * @param string[] $tableNames
+     * @return string[]
      */
     private function resolveTableNames(array $tableNames): array
     {
@@ -79,6 +82,9 @@ class ConfigProcessor
 
     /**
      * Resolve table name patterns stored as array keys.
+     *
+     * @param array<string, array<string, mixed>> $tablesData
+     * @return array<string, array<string, mixed>>
      */
     private function resolveTablesData(array $tablesData): array
     {
@@ -89,7 +95,7 @@ class ConfigProcessor
 
             foreach ($matches as $match) {
                 // Throw an exception if a converter refers to a column that does not exist
-                $this->validateTableColumns($tableName, $tableData);
+                $this->validateTableColumns($match, $tableData);
 
                 // Merge table configuration
                 if (!array_key_exists($match, $resolved)) {
@@ -127,6 +133,9 @@ class ConfigProcessor
 
     /**
      * Raise an exception if the table data contains a converter that references an undefined column.
+     *
+     * @param array<string, mixed> $tableData
+     * @throws RuntimeException
      */
     private function validateTableColumns(string $tableName, array $tableData): void
     {
@@ -141,7 +150,7 @@ class ConfigProcessor
 
             if (!$disabled && !in_array($columnName, $columns)) {
                 $message = 'The table "%s" uses a converter on an undefined column "%s".';
-                throw new ValidationException(sprintf($message, $tableName, $columnName));
+                throw new RuntimeException(sprintf($message, $tableName, $columnName));
             }
         }
     }

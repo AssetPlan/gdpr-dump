@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Smile\GdprDump\Tests\Unit\Dumper\Config;
 
 use Smile\GdprDump\Config\Config;
-use Smile\GdprDump\Database\Metadata\MysqlMetadata;
+use Smile\GdprDump\Database\Metadata\MetadataInterface;
 use Smile\GdprDump\Dumper\Config\ConfigProcessor;
 use Smile\GdprDump\Tests\Unit\TestCase;
 
-class ConfigProcessorTest extends TestCase
+final class ConfigProcessorTest extends TestCase
 {
     /**
      * Test the config processor.
@@ -26,8 +26,8 @@ class ConfigProcessorTest extends TestCase
         $processor = $this->createConfigProcessor();
         $config = $processor->process($config);
 
-        $this->assertSame(['table1'], $config->getTablesBlacklist());
-        $this->assertSame(['table2'], $config->getTablesWhitelist());
+        $this->assertSame(['table1'], $config->getExcludedTables());
+        $this->assertSame(['table2'], $config->getIncludedTables());
         $this->assertSame(['table3'], array_keys($config->getTablesConfig()->all()));
     }
 
@@ -46,8 +46,8 @@ class ConfigProcessorTest extends TestCase
         $processor = $this->createConfigProcessor();
         $config = $processor->process($config);
 
-        $this->assertSame(['table1', 'table2', 'table3'], $config->getTablesBlacklist());
-        $this->assertSame(['table1', 'table2', 'table3'], $config->getTablesWhitelist());
+        $this->assertSame(['table1', 'table2', 'table3'], $config->getExcludedTables());
+        $this->assertSame(['table1', 'table2', 'table3'], $config->getIncludedTables());
         $this->assertSame(['table1', 'table2', 'table3'], array_keys($config->getTablesConfig()->all()));
     }
 
@@ -60,8 +60,8 @@ class ConfigProcessorTest extends TestCase
         $processor = $this->createConfigProcessor();
         $config = $processor->process($config);
 
-        $this->assertSame([], $config->getTablesBlacklist());
-        $this->assertSame([], $config->getTablesWhitelist());
+        $this->assertSame([], $config->getExcludedTables());
+        $this->assertSame([], $config->getIncludedTables());
         $this->assertSame([], $config->getTablesConfig()->all());
     }
 
@@ -70,7 +70,7 @@ class ConfigProcessorTest extends TestCase
      */
     private function createConfigProcessor(): ConfigProcessor
     {
-        $metadataMock = $this->createMock(MysqlMetadata::class);
+        $metadataMock = $this->createMock(MetadataInterface::class);
         $metadataMock->expects($this->atMost(1))
             ->method('getTableNames')
             ->willReturn(['table1', 'table2', 'table3']);

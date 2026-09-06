@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Smile\GdprDump\Config\Loader;
 
-class FileLocator implements FileLocatorInterface
+final class FileLocator implements FileLocatorInterface
 {
     /**
-     * @var string[]
+     * @var array<string, string>|null
      */
     private ?array $templates = null;
 
@@ -50,6 +50,7 @@ class FileLocator implements FileLocatorInterface
     /**
      * Locate the config templates.
      *
+     * @return array<string, string>
      * @throws FileNotFoundException
      */
     private function getTemplates(): array

@@ -9,7 +9,7 @@ use Smile\GdprDump\Config\Validator\JsonSchemaValidator;
 use Smile\GdprDump\Tests\Functional\TestCase;
 use stdClass;
 
-class JsonSchemaValidatorTest extends TestCase
+final class JsonSchemaValidatorTest extends TestCase
 {
     private JsonSchemaValidator $validator;
 
@@ -33,7 +33,7 @@ class JsonSchemaValidatorTest extends TestCase
                 'user' => 'myuser',
                 'password' => 'mypassword',
                 'host' => 'myhost',
-                'port' => '3306',
+                'port' => 3306,
                 'driver' => 'pdo_mysql',
                 'charset' => 'utf8mb',
                 'driver_options' => [
@@ -106,7 +106,7 @@ class JsonSchemaValidatorTest extends TestCase
     }
 
     /**
-     * Test the tables whitelist.
+     * Test the "tables_whitelist" parameter.
      */
     public function testTablesWhitelist(): void
     {
@@ -118,7 +118,7 @@ class JsonSchemaValidatorTest extends TestCase
     }
 
     /**
-     * Test the tables blacklist.
+     * Test the "tables_blacklist" parameter.
      */
     public function testTablesBlacklist(): void
     {
@@ -230,6 +230,9 @@ class JsonSchemaValidatorTest extends TestCase
 
     /**
      * Add required data to the config params.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
      */
     private function prepareData(array $data): array
     {

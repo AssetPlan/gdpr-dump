@@ -9,7 +9,7 @@ use Smile\GdprDump\Config\Compiler\Processor\EnvVarProcessor;
 use Smile\GdprDump\Config\Config;
 use Smile\GdprDump\Tests\Unit\TestCase;
 
-class EnvVarProcessorTest extends TestCase
+final class EnvVarProcessorTest extends TestCase
 {
     /**
      * Assert that environment variables are processed successfully.
@@ -144,7 +144,7 @@ class EnvVarProcessorTest extends TestCase
     private function processValue(string $value): void
     {
         $processor = new EnvVarProcessor();
-        $config = new Config([$value]);
+        $config = new Config(['env_var' => $value]);
         $processor->process($config);
     }
 }

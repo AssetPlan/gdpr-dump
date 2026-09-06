@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Smile\GdprDump\Console\Helper;
 
 use Smile\GdprDump\Database\Metadata\MetadataInterface;
-use Smile\GdprDump\Dumper\Config\DumperConfig;
+use Smile\GdprDump\Dumper\Config\DumperConfigInterface;
 use Smile\GdprDump\Dumper\Event\DumpEvent;
 use Smile\GdprDump\Dumper\Event\DumpFinishedEvent;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -13,10 +13,14 @@ use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class DumpInfo
+final class DumpInfo
 {
     private OutputInterface $output;
     private ProgressBar $progressBar;
+
+    /**
+     * @var array{name: string, completed: bool, rowCount: int}|null
+     */
     private ?array $lastTableInfo = null;
 
     public function __construct(private EventDispatcherInterface $eventDispatcher)
@@ -101,6 +105,7 @@ class DumpInfo
     private function getDumpInfoHook(): callable
     {
         return function (string $object, array $info): void {
+            /** @var array{name: string, completed: bool, rowCount: int} $info */
             if ($object !== 'table') {
                 // The max steps of the progress bar only include tables
                 return;
@@ -137,6 +142,8 @@ class DumpInfo
 
     /**
      * Update the progress bar message.
+     *
+     * @param array{name: string, completed: bool, rowCount: int} $tableInfo
      */
     private function updateProgressBarMessage(array $tableInfo): void
     {
@@ -147,10 +154,10 @@ class DumpInfo
     /**
      * Get max number of steps of the progress bar.
      */
-    private function getMaxSteps(DumperConfig $config, MetadataInterface $metadata): int
+    private function getMaxSteps(DumperConfigInterface $config, MetadataInterface $metadata): int
     {
-        $includedTables = $config->getTablesWhitelist() ?: $metadata->getTableNames();
-        $excludedTables = $config->getTablesBlacklist();
+        $includedTables = $config->getIncludedTables() ?: $metadata->getTableNames();
+        $excludedTables = $config->getExcludedTables();
 
         return count(array_diff($includedTables, $excludedTables));
     }

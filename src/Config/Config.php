@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Smile\GdprDump\Config;
 
-class Config implements ConfigInterface
+final class Config implements ConfigInterface
 {
+    /**
+     * @param array<string, mixed> $items
+     */
     public function __construct(private array $items = [])
     {
     }
@@ -66,6 +69,10 @@ class Config implements ConfigInterface
 
     /**
      * Merge two arrays.
+     *
+     * @param mixed[] $data
+     * @param mixed[] $override
+     * @return mixed[]
      */
     private function mergeArray(array $data, array $override): array
     {

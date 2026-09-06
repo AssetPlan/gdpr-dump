@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class ConverterAliasPass implements CompilerPassInterface
+final class ConverterAliasPass implements CompilerPassInterface
 {
     public const ALIAS_PREFIX = 'converter.';
 
@@ -32,6 +32,7 @@ class ConverterAliasPass implements CompilerPassInterface
                 );
             }
 
+            // Get the alias name
             $aliasName = $this->getAliasName($className);
             if ($container->hasDefinition($aliasName)) {
                 throw new RuntimeException(
@@ -39,15 +40,14 @@ class ConverterAliasPass implements CompilerPassInterface
                 );
             }
 
+            // Create the alias
             $alias = new Alias($className, true);
             $container->setAlias($aliasName, $alias);
         }
     }
 
     /**
-     * Get a converter alias name (class name with first letter in lower caps).
-     *
-     * The alias name contains a prefix to prevent any conflict with other services.
+     * Get alias of converter service by class name (class name with first letter in lower caps).
      */
     private function getAliasName(string $className): string
     {

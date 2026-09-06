@@ -2,11 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
-## 5.0.0 (WIP)
+## [5.0.7] - 2026-02-23
+[5.0.7]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.6...5.0.7
 
-- Added table column validation. GdprDump now throws an exception if a config file contains an undefined column ([#125](https://github.com/Smile-SA/gdpr-dump/pull/125))
+Bugfixes:
+
+- Fixed an error that occurred when the database url contains special characters ([#196](https://github.com/Smile-SA/gdpr-dump/pull/196))
+
+Internal:
+
+- Moved converters to a dedicated namespace ([#198](https://github.com/Smile-SA/gdpr-dump/pull/198))
+
+## [5.0.6] - 2026-01-15
+[5.0.6]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.5...5.0.6
+
+- Compatibility with PHP 8.5
+- Fixed an error that occurred when parsing table name patterns ([#190](https://github.com/Smile-SA/gdpr-dump/pull/190))
+
+## [5.0.5] - 2025-04-05
+[5.0.5]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.4...5.0.5
+
+- Fixed database url param not being compatible with env vars ([#157](https://github.com/Smile-SA/gdpr-dump/pull/157))
+
+## [5.0.4] - 2025-04-03
+[5.0.4]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.3...5.0.4
+
+- Added optional `database.url` config parameter ([#147](https://github.com/Smile-SA/gdpr-dump/pull/147))
+
+## [5.0.3] - 2025-02-27
+[5.0.3]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.2...5.0.3
+
+- Added forbidden statements to the query validator: `begin`, `call`, `check`, `checksum`, `do`, `end`, `import`, `insert`, `replace`, `restart`, `stop` ([#153](https://github.com/Smile-SA/gdpr-dump/pull/153))
+
+## [5.0.2] - 2024-12-02
+[5.0.2]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.1...5.0.2
+
+- Removed converter for "email_imported" column from magento2 template file ([#144](https://github.com/Smile-SA/gdpr-dump/pull/144))
+
+## [5.0.1] - 2024-07-10
+[5.0.1]: https://github.com/Smile-SA/gdpr-dump/compare/5.0.0...5.0.1
+
+- Fixed invalid column name in the magento2 template ([#141](https://github.com/Smile-SA/gdpr-dump/pull/141))
+
+## [5.0.0] - 2024-07-01
+[5.0.0]: https://github.com/Smile-SA/gdpr-dump/compare/4.2.2...5.0.0
+
+New features:
+
+- Added command-line options to specify database credentials: `--host`, `--port`, `--user`, `--password`, `--database` ([#135](https://github.com/Smile-SA/gdpr-dump/pull/135))
+- Added command-line option to perform a dry-run: `--dry-run` ([#137](https://github.com/Smile-SA/gdpr-dump/pull/137))
+
+Breaking changes:
+
+- GdprDump now throws an exception if a config file contains an undefined column ([#125](https://github.com/Smile-SA/gdpr-dump/pull/125))
 - Removed support of the `filters` parameter. Use the `where` parameter instead ([#128](https://github.com/Smile-SA/gdpr-dump/pull/128))
 - Removed undefined column customer_address.vat_id from shopware6 template ([#132](https://github.com/Smile-SA/gdpr-dump/pull/132))
+- Stricter config file validation: string parameters don't accept integer values anymore ([#129](https://github.com/Smile-SA/gdpr-dump/pull/129))
 
 ## [4.2.2] - 2024-03-26
 [4.2.2]: https://github.com/Smile-SA/gdpr-dump/compare/4.2.1...4.2.2
