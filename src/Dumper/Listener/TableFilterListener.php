@@ -9,15 +9,15 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Smile\GdprDump\Database\Metadata\Definition\Constraint\ForeignKey;
 use Smile\GdprDump\Database\Metadata\MetadataInterface;
 use Smile\GdprDump\Database\TableDependencyResolver;
-use Smile\GdprDump\Dumper\Config\DumperConfig;
+use Smile\GdprDump\Dumper\Config\DumperConfigInterface;
 use Smile\GdprDump\Dumper\Event\DumpEvent;
 use UnexpectedValueException;
 
-class TableFilterListener
+final class TableFilterListener
 {
     private Connection $connection;
     private MetadataInterface $metadata;
-    private DumperConfig $config;
+    private DumperConfigInterface $config;
 
     /**
      * Define the filters to apply on the tables.
@@ -33,6 +33,8 @@ class TableFilterListener
 
     /**
      * Get the filters to apply on each table.
+     *
+     * @return array<string, string>
      */
     private function buildTablesWhere(): array
     {
@@ -105,6 +107,9 @@ class TableFilterListener
      * Internal parameters:
      * - $processedTables: used to detect cyclic dependencies and stop the recursion
      * - $subQueryCount: used to generate unique query names
+     *
+     * @param array<string, array<string, ForeignKey>> $dependencies
+     * @param array<string, bool> $processedTables
      */
     private function addDependentFilter(
         string $tableName,
@@ -203,6 +208,8 @@ class TableFilterListener
 
     /**
      * Get the SQL query that represents a list of columns.
+     *
+     * @param string[] $columns
      */
     private function getColumnsSql(array $columns, bool $enclose = false): string
     {

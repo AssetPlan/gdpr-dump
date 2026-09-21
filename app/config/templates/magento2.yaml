@@ -594,11 +594,6 @@ if_version:
                     email:
                         converter: 'randomizeEmail'
 
-            email_order:
-                converters:
-                    email_imported:
-                        converter: 'randomizeEmail'
-
             email_sms_order_queue:
                 converters:
                     email:

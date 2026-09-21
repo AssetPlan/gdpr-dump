@@ -5,23 +5,29 @@ declare(strict_types=1);
 namespace Smile\GdprDump\Dumper\Config\Definition;
 
 use Smile\GdprDump\Dumper\Config\Definition\Table\SortOrder;
-use Smile\GdprDump\Dumper\Config\Validation\ValidationException;
 use Smile\GdprDump\Dumper\Config\Validation\WhereExprValidator;
 use UnexpectedValueException;
 
-class TableConfig
+final class TableConfig
 {
     private string $name;
     private ?string $where = null;
     private ?int $limit = null;
-    private array $converters = [];
     private string $skipCondition = '';
+
+    /**
+     * @var array<string, mixed>
+     */
+    private array $converters = [];
 
     /**
      * @var SortOrder[]
      */
     private array $sortOrders = [];
 
+    /**
+     * @param array<string, mixed> $tableConfig
+     */
     public function __construct(string $tableName, array $tableConfig)
     {
         $this->name = $tableName;
@@ -64,6 +70,8 @@ class TableConfig
 
     /**
      * Get the converter definitions of a table.
+     *
+     * @return array<string, mixed>
      */
     public function getConverters(): array
     {
@@ -105,6 +113,8 @@ class TableConfig
 
     /**
      * Prepare the table config.
+     *
+     * @param array<string, mixed> $tableData
      */
     private function prepareConfig(array $tableData): void
     {
@@ -117,12 +127,13 @@ class TableConfig
     /**
      * Prepare the table filters.
      *
-     * @throws ValidationException
+     * @param array<string, mixed> $tableData
+     * @throws UnexpectedValueException
      */
     private function prepareFilters(array $tableData): void
     {
         if (array_key_exists('filters', $tableData)) {
-            throw new ValidationException(
+            throw new UnexpectedValueException(
                 'The property "filters" is no longer supported. Use "where" instead.'
             );
         }
@@ -138,6 +149,7 @@ class TableConfig
     /**
      * Prepare the table sort order.
      *
+     * @param array<string, mixed> $tableData
      * @throws UnexpectedValueException
      */
     private function prepareSortOrder(array $tableData): void
@@ -166,6 +178,8 @@ class TableConfig
 
     /**
      * Prepare the table limit.
+     *
+     * @param array<string, mixed> $tableData
      */
     private function prepareLimit(array $tableData): void
     {
@@ -180,6 +194,8 @@ class TableConfig
 
     /**
      * Prepare the table converters.
+     *
+     * @param array<string, mixed> $tableData
      */
     private function prepareConverters(array $tableData): void
     {

@@ -6,29 +6,29 @@ namespace Smile\GdprDump\Tests\Unit\Dumper\Config;
 
 use Smile\GdprDump\Config\Config;
 use Smile\GdprDump\Dumper\Config\DumperConfig;
-use Smile\GdprDump\Dumper\Config\Validation\ValidationException;
 use Smile\GdprDump\Tests\Unit\TestCase;
+use UnexpectedValueException;
 
-class DumperConfigTest extends TestCase
+final class DumperConfigTest extends TestCase
 {
     /**
      * Test the "tables_whitelist" parameter.
      */
-    public function testTablesWhitelist(): void
+    public function testIncludedTables(): void
     {
-        $whitelist = ['table1', 'table2'];
-        $config = $this->createConfig(['tables_whitelist' => $whitelist]);
-        $this->assertSame($whitelist, $config->getTablesWhitelist());
+        $includedTables = ['table1', 'table2'];
+        $config = $this->createConfig(['tables_whitelist' => $includedTables]);
+        $this->assertSame($includedTables, $config->getIncludedTables());
     }
 
     /**
      * Test the "tables_blacklist" parameter.
      */
-    public function testTablesBlacklist(): void
+    public function testExcludedTables(): void
     {
-        $blacklist = ['table1', 'table2'];
-        $config = $this->createConfig(['tables_blacklist' => $blacklist]);
-        $this->assertSame($blacklist, $config->getTablesBlacklist());
+        $excludedTables = ['table1', 'table2'];
+        $config = $this->createConfig(['tables_blacklist' => $excludedTables]);
+        $this->assertSame($excludedTables, $config->getExcludedTables());
     }
 
     /**
@@ -59,7 +59,7 @@ class DumperConfigTest extends TestCase
      */
     public function testDumpSettings(): void
     {
-        $config = $this->createConfig(['dump' => ['output' => 'dump.sql', 'hex_blob' => true, 'replace' => true]]);
+        $config = $this->createConfig(['dump' => ['output' => 'dump.sql', 'hex_blob' => true]]);
 
         // Dump output
         $this->assertSame('dump.sql', $config->getDumpOutput());
@@ -68,8 +68,6 @@ class DumperConfigTest extends TestCase
         $settings = $config->getDumpSettings();
         $this->assertArrayHasKey('hex_blob', $settings);
         $this->assertTrue($settings['hex_blob']);
-        $this->assertArrayHasKey('replace', $settings);
-        $this->assertTrue($settings['replace']);
     }
 
     /**
@@ -122,50 +120,48 @@ class DumperConfigTest extends TestCase
     {
         $config = $this->createConfig([]);
 
-        $this->assertSame([], $config->getTablesWhitelist());
-        $this->assertSame([], $config->getTablesBlacklist());
+        $this->assertSame([], $config->getDumpSettings());
+        $this->assertSame([], $config->getIncludedTables());
+        $this->assertSame([], $config->getExcludedTables());
         $this->assertSame([], $config->getTablesToSort());
         $this->assertSame([], $config->getTablesToFilter());
         $this->assertSame([], $config->getTablesToTruncate());
         $this->assertSame([], $config->getTablesConfig()->all());
-        $this->assertSame('php://stdout', $config->getDumpOutput());
         $this->assertTrue($config->getFilterPropagationSettings()->isEnabled());
         $this->assertSame([], $config->getFilterPropagationSettings()->getIgnoredForeignKeys());
-
-        // Test these values because they differ from MySQLDump-PHP
-        $settings = $config->getDumpSettings();
-        $this->assertArrayHasKey('add_drop_table', $settings);
-        $this->assertTrue($settings['add_drop_table']);
-        $this->assertArrayHasKey('hex_blob', $settings);
-        $this->assertFalse($settings['hex_blob']);
-        $this->assertArrayHasKey('lock_tables', $settings);
-        $this->assertFalse($settings['lock_tables']);
-        $this->assertArrayHasKey('replace', $settings);
-        $this->assertFalse($settings['replace']);
-
         $this->assertSame('', $config->getFakerSettings()->getLocale());
-    }
-
-    /**
-     * Assert that an exception is thrown when an invalid parameter is used.
-     */
-    public function testInvalidDumpParameter(): void
-    {
-        $this->expectException(ValidationException::class);
-        $this->createConfig(['dump' => ['not_exists' => true]]);
     }
 
     /**
      * Assert that an exception is thrown when a var query contains a forbidden statement.
      */
-    public function testInvalidStatementInQuery(): void
+    public function testInvalidStatementInVariableQuery(): void
     {
-        $this->expectException(ValidationException::class);
-        $this->createConfig(['variables' => ['my_var' => 'select my_col from my_table; delete from my_table']]);
+        $this->expectException(UnexpectedValueException::class);
+        $this->createConfig([
+            'variables' => ['my_var' => 'select my_col from my_table; delete from my_table'],
+        ]);
+    }
+
+    /**
+     * Assert that an exception is thrown when an init command contains a forbidden statement.
+     */
+    public function testInvalidStatementInInitCommand(): void
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $this->createConfig([
+            'dump' => [
+                'init_commands' => [
+                    'my_var' => 'select my_col from my_table; delete from my_table',
+                ],
+            ],
+        ]);
     }
 
     /**
      * Create a dumper config object that stores the specified data.
+     *
+     * @param array<string, mixed> $data
      */
     private function createConfig(array $data): DumperConfig
     {

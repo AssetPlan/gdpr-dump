@@ -6,9 +6,9 @@ namespace Smile\GdprDump\Database;
 
 use Smile\GdprDump\Database\Metadata\Definition\Constraint\ForeignKey;
 use Smile\GdprDump\Database\Metadata\MetadataInterface;
-use Smile\GdprDump\Dumper\Config\DumperConfig;
+use Smile\GdprDump\Dumper\Config\DumperConfigInterface;
 
-class TableDependencyResolver
+final class TableDependencyResolver
 {
     private bool $resolved = false;
 
@@ -20,7 +20,7 @@ class TableDependencyResolver
      */
     private array $foreignKeys = [];
 
-    public function __construct(private MetadataInterface $metadata, private DumperConfig $config)
+    public function __construct(private MetadataInterface $metadata, private DumperConfigInterface $config)
     {
     }
 
@@ -49,6 +49,9 @@ class TableDependencyResolver
      * Same result if `$tableNames` is `['table1']`.
      * If `$tableNames` is `['table2']`, the result array has a single key `'table3'`.
      * If `$tableNames` is `['table3']`, the result array is empty.
+     *
+     * @param string[] $tableNames
+     * @return array<string, array<string, ForeignKey>>
      */
     public function getDependencies(array $tableNames): array
     {
@@ -64,6 +67,9 @@ class TableDependencyResolver
 
     /**
      * Recursively fetch all dependencies related to a table.
+     *
+     * @param array<string, array<string, ForeignKey>> $resolved
+     * @return array<string, array<string, ForeignKey>>
      */
     private function resolveDependencies(string $tableName, array $resolved = []): array
     {

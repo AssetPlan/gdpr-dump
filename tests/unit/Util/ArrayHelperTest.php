@@ -7,7 +7,7 @@ namespace Smile\GdprDump\Tests\Unit\Util;
 use Smile\GdprDump\Tests\Unit\TestCase;
 use Smile\GdprDump\Util\ArrayHelper;
 
-class ArrayHelperTest extends TestCase
+final class ArrayHelperTest extends TestCase
 {
     /**
      * Test the "getPath" method.
@@ -33,6 +33,9 @@ class ArrayHelperTest extends TestCase
         $data = [];
 
         ArrayHelper::setPath($data, 'customer.email', 'email@example.org');
+
+        $this->assertArrayHasKey('customer', $data);
+        $this->assertArrayHasKey('email', $data['customer']);
         $this->assertSame('email@example.org', $data['customer']['email']);
     }
 }

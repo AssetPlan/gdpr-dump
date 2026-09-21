@@ -18,11 +18,12 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
-class DumpCommand extends Command
+final class DumpCommand extends Command
 {
     public function __construct(
         private DumperInterface $dumper,
@@ -39,13 +40,23 @@ class DumpCommand extends Command
      */
     public function configure(): void
     {
+        $configHint = ' (can also be specified in the configuration file)';
+
+        // phpcs:disable Generic.Files.LineLength.TooLong
         $this->setName('gdpr-dump')
             ->setDescription('Create an anonymized dump')
             ->addArgument(
                 'config_file',
                 InputArgument::IS_ARRAY | InputArgument::REQUIRED,
                 'Dump configuration file(s)'
-            );
+            )
+            ->addOption('host', null, InputOption::VALUE_REQUIRED, 'Database host' . $configHint)
+            ->addOption('port', null, InputOption::VALUE_REQUIRED, 'Database port' . $configHint)
+            ->addOption('user', null, InputOption::VALUE_REQUIRED, 'Database user' . $configHint)
+            ->addOption('password', null, InputOption::VALUE_REQUIRED, 'Database password' . $configHint)
+            ->addOption('database', null, InputOption::VALUE_REQUIRED, 'Database name' . $configHint)
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'The command will validate the configuration file, but won\'t actually perform the dump');
+        // phpcs:enable Generic.Files.LineLength.TooLong
     }
 
     /**
@@ -54,7 +65,7 @@ class DumpCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            // Load the config
+            // Load the config file(s)
             $config = $this->loadConfig($input);
 
             // Validate the config data
@@ -65,7 +76,7 @@ class DumpCommand extends Command
             }
 
             // Prompt for the password if not defined
-            $database = $config->get('database', []);
+            $database = (array) $config->get('database', []);
             if (!array_key_exists('password', $database)) {
                 $database['password'] = $this->promptPassword($input, $output);
                 $config->set('database', $database);
@@ -75,7 +86,7 @@ class DumpCommand extends Command
                 $this->dumpInfo->setOutput($output);
             }
 
-            $this->dumper->dump($config);
+            $this->dumper->dump($config, $input->getOption('dry-run'));
         } catch (Exception $e) {
             if ($output->isVerbose()) {
                 throw $e;
@@ -102,10 +113,50 @@ class DumpCommand extends Command
             $this->configLoader->load($configFile, $config);
         }
 
+        // Add database config from input options
+        $this->addInputOptionsToConfig($config, $input);
+
         // Compile the config
         $this->compiler->compile($config);
 
         return $config;
+    }
+
+    /**
+     * Add input option values to the config.
+     *
+     * @throws ConfigException
+     */
+    private function addInputOptionsToConfig(ConfigInterface $config, InputInterface $input): void
+    {
+        $databaseConfig = (array) $config->get('database', []);
+
+        foreach (['host', 'port', 'user', 'password', 'database'] as $option) {
+            $value = $input->getOption($option);
+            if ($value === null) {
+                // Option was not provided
+                continue;
+            }
+
+            if ($value === '') {
+                if ($option === 'password') {
+                    // Remove the password from the config if an empty value was provided
+                    unset($databaseConfig['password']);
+                    continue;
+                }
+
+                // Option must have a value
+                throw new ConfigException(sprintf('Please provide a value for the option "%s".', $option));
+            }
+
+            // Override the config value with the provided option value
+            $configKey = $option === 'database' ? 'name' : $option;
+            $databaseConfig[$configKey] = $value;
+        }
+
+        if (!empty($databaseConfig)) {
+            $config->set('database', $databaseConfig);
+        }
     }
 
     /**

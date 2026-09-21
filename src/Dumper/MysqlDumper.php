@@ -8,12 +8,12 @@ use Druidfi\Mysqldump\Mysqldump;
 use Smile\GdprDump\Config\ConfigInterface;
 use Smile\GdprDump\Database\DatabaseFactory;
 use Smile\GdprDump\Dumper\Config\ConfigProcessor;
-use Smile\GdprDump\Dumper\Config\DumperConfig;
+use Smile\GdprDump\Dumper\Config\DumperConfigInterface;
 use Smile\GdprDump\Dumper\Event\DumpEvent;
 use Smile\GdprDump\Dumper\Event\DumpFinishedEvent;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-class MysqlDumper implements DumperInterface
+final class MysqlDumper implements DumperInterface
 {
     public function __construct(
         private DatabaseFactory $databaseFactory,
@@ -24,7 +24,7 @@ class MysqlDumper implements DumperInterface
     /**
      * @inheritdoc
      */
-    public function dump(ConfigInterface $config): void
+    public function dump(ConfigInterface $config, bool $dryRun = false): void
     {
         $database = $this->databaseFactory->create($config);
 
@@ -57,16 +57,20 @@ class MysqlDumper implements DumperInterface
         // Close the Doctrine connection before proceeding to the dump creation (MySQLDump-PHP uses its own connection)
         $database->getConnection()->close();
 
-        // Create the dump
-        $output = $config->getDumpOutput();
-        $dumper->start($output);
+        if (!$dryRun) {
+            // Create the dump
+            $dumper->start($config->getDumpOutput());
+        }
+
         $this->eventDispatcher->dispatch(new DumpFinishedEvent($config));
     }
 
     /**
      * Get the dump settings.
+     *
+     * @return array<string, mixed>
      */
-    private function getDumpSettings(DumperConfig $config): array
+    private function getDumpSettings(DumperConfigInterface $config): array
     {
         $settings = $config->getDumpSettings();
 
@@ -85,9 +89,14 @@ class MysqlDumper implements DumperInterface
             }
         }
 
-        // Tables to whitelist/blacklist/truncate
-        $settings['include-tables'] = $config->getTablesWhitelist();
-        $settings['exclude-tables'] = $config->getTablesBlacklist();
+        if (array_key_exists('compress', $settings)) {
+            // e.g. "gzip" -> "Gzip"
+            $settings['compress'] = ucfirst($settings['compress']);
+        }
+
+        // Tables to include/exclude/truncate
+        $settings['include-tables'] = $config->getIncludedTables();
+        $settings['exclude-tables'] = $config->getExcludedTables();
         $settings['no-data'] = $config->getTablesToTruncate();
 
         // Set readonly session

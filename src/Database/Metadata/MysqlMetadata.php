@@ -8,11 +8,23 @@ use Doctrine\DBAL\Connection;
 use RuntimeException;
 use Smile\GdprDump\Database\Metadata\Definition\Constraint\ForeignKey;
 
-class MysqlMetadata implements MetadataInterface
+final class MysqlMetadata implements MetadataInterface
 {
     private string $schema;
+
+    /**
+     * @var string[]
+     */
     private ?array $tableNames = null;
+
+    /**
+     * @var array<string, string[]>
+     */
     private ?array $columnNames = null;
+
+    /**
+     * @var array<string, ForeignKey[]>
+     */
     private ?array $foreignKeys = null;
 
     public function __construct(private Connection $connection)

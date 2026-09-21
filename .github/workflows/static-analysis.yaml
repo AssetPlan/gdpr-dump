@@ -5,6 +5,7 @@ on:
     push:
         branches:
             - 'main'
+            - '[0-9]+.x'
 
 jobs:
     static-analysis:
@@ -17,7 +18,7 @@ jobs:
             - name: 'Install PHP'
               uses: 'shivammathur/setup-php@v2'
               with:
-                  php-version: '8.1'
+                  php-version: '8.2'
                   coverage: 'none'
                   extensions: 'mbstring'
                   tools: 'composer:v2'
